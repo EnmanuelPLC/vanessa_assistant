@@ -1,0 +1,274 @@
+#:import Factory kivy.factory.Factory
+<VideoCfgPopup@Popup>:
+    auto_dismiss: False
+    title: 'Configura el reproductor de video'
+    size_hint: .8, .8
+    BoxLayout:
+        orientation: "vertical"
+        padding: 10
+        FileChooserIconView:
+            id: file_chooser
+            filters: [app.root.screens[1].is_sys_file]
+
+        GridLayout:
+            cols: 2
+            rows: 1
+            size_hint: 1, .3
+            padding: 30
+
+            Button:
+                text: 'Cerrar'
+                on_press: root.dismiss()
+                on_release: app.root.screens[1].set_player_path(root, 'video')
+
+<MusicCfgPopup@Popup>:
+    auto_dismiss: False
+    title: 'Configura el reproductor de música'
+    size_hint: .8, .8
+    padding: 10
+    BoxLayout:
+        orientation: "vertical"
+        FileChooserIconView:
+            id: file_chooser
+            filters: [Factory.VanessaSettingsUI().is_sys_file]
+
+        GridLayout:
+            cols: 2
+            rows: 1
+            size_hint: 1, .3
+            padding: 30
+
+            Button:
+                text: 'Cerrar'
+                on_press: root.dismiss()
+                on_release: app.root.screens[1].set_player_path(root, 'music')
+
+VanessaUIManager:
+    VanessaMainUI:
+    VanessaSettingsUI:
+    VanessaRegisterUI:
+    VanessaAboutUI:
+
+<VanessaMainUI>
+    name:'main_screen'
+    id:main_ui
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 25
+
+        Image:
+            size_hint: None, None
+            width: 350
+            height: 350
+            pos_hint:{"center_x":.5,"top":1}
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Line:
+                    width: 3
+                    rectangle: self.x+11, self.y-3, self.width-22, self.height+6
+            id: vanessa_img
+            source: "assets/vanessa_image.png"
+
+        GridLayout:
+            cols: 2
+            rows: 1
+            spacing: 0
+            size_hint: None, 1
+            height: 200
+            width: 550
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            Label:
+                size_hint: None, .5
+                pos_hint_y: {'center_y': 1}
+                id: vanessa_logo
+                width: 300
+                text: "Vanessa - "
+                color: 0,0,0,1
+                font_size: 50
+                font_name: 'KaushanScript-Regular'
+
+            Label:
+                size_hint: None, None
+                height: 250
+                pos: 1, .5
+                id: main_label
+                width: 250
+                text: ''
+                color: 0,0,0,1
+                font_size: 40
+                font_name: 'KaushanScript-Regular'
+
+        GridLayout:
+            cols: 3
+            spacing: 30
+            size_hint: 1, .4
+            Button:
+                id: settings
+                text: "Ajustes"
+                on_press:
+                    root.manager.current = 'settings'
+                    root.manager.transition.direction = 'left'
+
+            Button:
+                text: "Información"
+                on_press:
+                    root.manager.current = 'about'
+                    root.manager.transition.direction = 'up'
+
+            Button:
+                text: "Registro"
+                on_press:
+                    root.manager.current = 'register'
+                    root.manager.transition.direction = 'right'
+
+<VanessaSettingsUI>
+    id: settings
+    name:'settings'
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 25
+
+        BoxLayout:
+            Button:
+                size_hint: None, None
+                width: 90
+                height: 90
+                pos_hint: {'x': 0, 'top': 1}
+                background_color: 1, 1, 1, 0
+                on_press:
+                    root.manager.current = 'main_screen'
+                    root.manager.transition.direction = 'right'
+                Image:
+                    canvas.before:
+                        PushMatrix
+                        Rotate:
+                            angle: 90
+                            origin: self.center
+                    canvas.after:
+                        PopMatrix
+                    source: "assets/back_arrow.png"
+                    size_hint: .8, .8
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    text: 'Tu nombre'
+                    color: 0,0,0,1
+                    font_size: 25
+                TextInput:
+                    size_hint: None, None
+                    height: 30
+                    id: user_name_input
+                    multiline: False
+                    background_normal: ''
+                    size_hint: .5, .3
+                    pos_hint: {"center_x": .5, 'top': 1}
+                    font_size: .6*self.height
+                    on_text: app.root.assistant.user['name'] = user_name_input.text
+                    canvas.before:
+                        Color:
+                            rgba: 0, 0, 0, 1
+                        Line:
+                            width: 1
+                            rectangle: self.x, self.y, self.width, self.height+.5
+
+        Label:
+            text: 'Configura la ruta de tus aplicaciones favoritas'
+            color: 0,0,0,1
+            font_size: 25
+
+        GridLayout:
+            cols: 4
+            rows: 2
+            spacing: 20
+
+            Button:
+                id: video_player_cfg_btn
+                text: 'Reproductor de video'
+                size_hint: .7, .7
+                pos_hint: {'center_x': .5, 'top': 0}
+                on_press: Factory.VideoCfgPopup().open()
+
+            Button:
+                id: music_player_cfg_btn
+                text: 'Reproductor de música'
+                size_hint: .7, .7
+                pos_hint: {'center_x': .5, 'top': 0}
+                on_release: Factory.MusicCfgPopup().open()
+
+            Button:
+                id: text_editor_cfg_btn
+                text: 'Editor de texto'
+                size_hint: .7, .7
+                pos_hint: {'center_x': .5, 'top': 0}
+                on_release: Factory.TextEditCfgPopup().open()
+
+
+<VanessaRegisterUI>
+    name:'register'
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 10
+
+        Button:
+            size_hint: None, None
+            width: 90
+            height: 90
+            background_color: 1, 1, 1, 0
+            pos_hint: {'right': 1, 'top': 1}
+            on_press:
+                root.manager.current = 'main_screen'
+                root.manager.transition.direction = 'left'
+            Image:
+                canvas.before:
+                    PushMatrix
+                    Rotate:
+                        angle: -90
+                        origin: self.center
+                canvas.after:
+                    PopMatrix
+                source: "assets/back_arrow.png"
+                size_hint: 1, 1
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+
+        Label:
+            text: 'Registro'
+            color: 0,0,0,1
+            pos_hint: {"left": 10}
+            italic: True
+            font_size: 30
+
+<VanessaAboutUI>
+    name:'about'
+    BoxLayout:
+        orientation: "vertical"
+        size: root.width, root.height
+        padding: 10
+
+        Button:
+            size_hint: None, None
+            width: 90
+            height: 90
+            background_color: 1, 1, 1, 0
+            pos_hint: {'center_x': 0.5, 'top': 1}
+            on_press:
+                root.manager.current = 'main_screen'
+                root.manager.transition.direction = 'down'
+            Image:
+                source: "assets/back_arrow.png"
+                size_hint: 1, 1
+                center_x: self.parent.center_x
+                center_y: self.parent.center_y
+        Label:
+            text: 'Acerca de aaaaaa'
+            color: 0,0,0,1
+            pos_hint: {"left": 10}
+            italic: True
+            font_size: 30
