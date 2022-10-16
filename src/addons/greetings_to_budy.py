@@ -29,7 +29,7 @@ def play_greeting(core: AssistantCore, phrase: str):
 
 
 def continue_greeting_on_ctx(core: AssistantCore, phrase: str):
-    if phrase.find("bien") > 0 or phrase.find("bién") > 0 or phrase.find("regular") > 0 or phrase.find("más o menos") > 0:
+    if phrase.find("bien") >= 0 or phrase.find("bién") >= 0 or phrase.find("regular") >= 0 or phrase.find("más o menos") >= 0:
         core.say("que bueno, me alegro que todo este bien contigo")
         core.say("si tienes algo que decirme o preguntare, metele, ahora es tu momento")
         core.context_set(continue_greeting_on_ctx)

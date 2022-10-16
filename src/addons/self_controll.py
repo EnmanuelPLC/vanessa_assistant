@@ -21,8 +21,8 @@ def start(core: AssistantCore):
 
 
 def system_try(core: AssistantCore, phrase: str):
-    if not core.to_try:
-        core.to_try = core.on_wind_action = True
+    if core.on_wind_action != 'to_try':
+        core.to_try = True
         core.say('Ahora estoy en segundo plano, para volver di, primer plano')
         core.context_set(core.commands)
     else:
@@ -30,9 +30,8 @@ def system_try(core: AssistantCore, phrase: str):
 
 
 def system_try_off(core: AssistantCore, phrase: str):
-    if core.to_try:
-        core.to_try = False
-        core.to_try_off = core.on_wind_action = True
+    if core.on_wind_action != 'to_try_off':
+        core.to_try_off = True
         core.say('Ya estoy de vuelta contigo, que tienes en mente ahora?')
         core.context_set(core.commands)
     else:
@@ -40,21 +39,27 @@ def system_try_off(core: AssistantCore, phrase: str):
 
 
 def focus(core: AssistantCore, phrase: str):
-    core.focus = True
-    core.say('Aqui estoy otra vez')
-    core.context_set(core.commands)
-    core.focus = core.on_wind_action = not core.focus
+    if core.on_wind_action != 'focus':
+        core.focus = True
+        core.say('Aqui estoy otra vez')
+        core.context_set(core.commands)
+    else:
+        core.say('Ya estoy modo ventana')
 
 
 def minimize(core: AssistantCore, phrase: str):
-    core.minimize = True
-    core.say('Minimizandome')
-    core.context_set(core.commands)
-    core.minimize = core.on_wind_action = not core.minimize
+    if core.on_wind_action != 'minimize':
+        core.minimize = True
+        core.say('Minimizandome')
+        core.context_set(core.commands)
+    else:
+        core.say('Ya estoy minimizada')
 
 
 def maximize(core: AssistantCore, phrase: str):
-    core.maximize = True
-    core.say('Maximizandome')
-    core.context_set(core.commands)
-    core.maximize = core.on_wind_action = not core.maximize
+    if core.on_wind_action != 'maximize':
+        core.maximize = True
+        core.say('Maximizandome')
+        core.context_set(core.commands)
+    else:
+        core.say('Ya estoy maximizada')

@@ -7,7 +7,6 @@ serialPath = ""
 
 def start(core: AssistantCore):
     """
-
     :param core:
     :return:
     """
@@ -16,15 +15,11 @@ def start(core: AssistantCore):
         "version": "2.0",
         "require_online": False,
 
-        "default_options": {
-            "multPath": '',
-            "serialPath": '',
-        },
-
         "commands": {
-            "reproductor de video": run_player,
-            "pelicula|película": play_mult,
-            "serie": play_serial,
+            "reproductor de video|reproductor de vídeo": video_player,
+            "pon música|oír música|ponme música|abre la música": music_player,
+            "pelicula|película|peliculas|filme|filmes": play_movies,
+            "serie|serial": play_serial,
         }
     }
     return manifest
@@ -32,31 +27,35 @@ def start(core: AssistantCore):
 
 def start_with_options(core: AssistantCore, manifest: dict):
     """
-
     :param core:
     :param manifest:
     :return:
     """
     global multPath, serialPath
-
     options = manifest["options"]
     multPath = options["multPath"]
     serialPath = options["serialPath"]
     return manifest
 
 
-def run_player(core: AssistantCore, phrase: str):
+def video_player(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
-    subprocess.Popen([core.mpcHcPath])
+    subprocess.Popen([core.user['video_player']])
 
 
-def play_mult(core: AssistantCore, phrase: str):
+def music_player(core: AssistantCore, phrase: str):
     """
+    :param core:
+    :param phrase:
+    """
+    subprocess.Popen([core.user['video_player']])
 
+
+def play_movies(core: AssistantCore, phrase: str):
+    """
     :param core:
     :param phrase:
     :return:
@@ -80,12 +79,11 @@ def play_mult(core: AssistantCore, phrase: str):
         core.context_set(core.commands_ctx)
     else:
         core.say("Debes elegir entre buscar una internet, reproducir una local o cancelar este comando")
-        core.context_set(play_mult)
+        core.context_set(play_movies)
 
 
 def search_movie(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -98,7 +96,6 @@ def search_movie(core: AssistantCore, phrase: str):
 
 def play_local_movie(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -106,13 +103,11 @@ def play_local_movie(core: AssistantCore, phrase: str):
     for f in mult_files:
         name = str(f)[:-4].lower().replace(".", "").replace(",", "")
         if name == phrase:
-            print("Pelicula ", f)
-            subprocess.Popen([core.mpcHcPath, multPath + "\\" + f])
+            subprocess.Popen([core.user['video_player'], f])
 
 
 def play_serial(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     :return:
@@ -141,7 +136,6 @@ def play_serial(core: AssistantCore, phrase: str):
 
 def play_serial_number(core: AssistantCore, phrase: str, serial_dir: str):
     """
-
     :param core:
     :param phrase:
     :param serial_dir:
@@ -198,7 +192,6 @@ def play_serial_number(core: AssistantCore, phrase: str, serial_dir: str):
 
 def mult_list():
     """
-
     :return:
     """
     from os import listdir
@@ -209,7 +202,6 @@ def mult_list():
 
 def serial_list():
     """
-
     :return:
     """
     from os import listdir

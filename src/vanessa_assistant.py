@@ -1,7 +1,5 @@
-"""
-Vanessa Assistant
-"""
-
+""" Vanessa Assistant """
+import random
 import sys
 import json
 import queue
@@ -32,6 +30,7 @@ class VanessaAssistant(Assistant):
         if self.dev:
             self.model = 'model_es_small'
         self.vosk_model = vosk.Model(self.model)
+        vosk.open_dll()
         self.voice_recognition = vosk.KaldiRecognizer(self.vosk_model, self.samplerate)
         self.init_with_addons()
         print('#' * 25)
@@ -39,13 +38,15 @@ class VanessaAssistant(Assistant):
         print('#' * 25)
 
     def listen(self):
-        """
-        Listen method
-        """
+        """ Listen method """
         try:
             with sd.RawInputStream(samplerate=self.samplerate, blocksize=4096, dtype='int16', channels=1, callback=self.callback):
-                self.say('Ya estoy en línea, lista para ayudarlo en lo que desee')
+                init_say = ['Estoy en línea, y entonces, que tienes en mente?', 'Es un placer estar aquí para ti',
+                            'Estoy lista para la acción, solo di mi nombre', 'Que gusto volver a estar contigo, que vamos hacer ahora?',
+                            'Aquí estoy de nuevo, que tienes pensado para hoy?']
+                self.say(init_say[random.randint(0, len(init_say) - 1)])
                 self.state = 'escuchando . . .'
+                self.online_check.start()
                 while self.alive:
                     data = self.q.get()
                     if self.voice_recognition.AcceptWaveform(bytes(data)):

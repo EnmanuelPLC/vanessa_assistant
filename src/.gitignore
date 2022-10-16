@@ -1,10 +1,6 @@
 /.idea/
 /__pycache__/
-/options/
 /model_es_small/
 /model/
 /others/
-/plugins_inactive/
-/temp/
 /vanessa_env/
-/tts_cache/

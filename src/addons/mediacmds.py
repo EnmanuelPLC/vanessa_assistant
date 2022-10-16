@@ -4,20 +4,19 @@ from assistant import AssistantCore
 
 def start(core: AssistantCore):
     """
-
     :param core:
     :return:
     """
     manifest = {
         "name": "Comandos de control para multimedia",
-        "version": "1.2",
+        "version": "2",
         "require_online": False,
 
         "commands": {
-            "play|pause": play_pause,
+            "empieza|play|pausa": play_pause,
             "siguiente": play_next,
             "anterior": play_prev,
-            "parar|detener": play_stop,
+            "parar|quitar": play_stop,
             "silenciar|apagar sonido": toggle_mute,
             "bajar volumen|reducir volumen": (volume_downX, 5),
             "subir volumen|aumentar volumen": (volume_upX, 5),
@@ -32,7 +31,6 @@ def start(core: AssistantCore):
 
 def play_pause(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -42,7 +40,6 @@ def play_pause(core: AssistantCore, phrase: str):
 
 def play_stop(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -52,7 +49,6 @@ def play_stop(core: AssistantCore, phrase: str):
 
 def play_next(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -62,7 +58,6 @@ def play_next(core: AssistantCore, phrase: str):
 
 def play_prev(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -72,7 +67,6 @@ def play_prev(core: AssistantCore, phrase: str):
 
 def toggle_mute(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -81,7 +75,6 @@ def toggle_mute(core: AssistantCore, phrase: str):
 
 def volume_upX(core: AssistantCore, phrase: str, param: int):
     """
-
     :param core:
     :param phrase:
     :param param:
@@ -92,7 +85,6 @@ def volume_upX(core: AssistantCore, phrase: str, param: int):
 
 def volume_downX(core: AssistantCore, phrase: str, param: int):
     """
-
     :param core:
     :param phrase:
     :param param:
@@ -103,7 +95,6 @@ def volume_downX(core: AssistantCore, phrase: str, param: int):
 
 def forward(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -113,7 +104,6 @@ def forward(core: AssistantCore, phrase: str):
 
 def backward(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
@@ -123,12 +113,7 @@ def backward(core: AssistantCore, phrase: str):
 
 def close(core: AssistantCore, phrase: str):
     """
-
     :param core:
     :param phrase:
     """
     print('Reproduccion cerrada')
-
-
-if __name__ == "__main__":
-    play_pause(None, "")

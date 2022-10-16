@@ -2,23 +2,20 @@
 import threading
 from datetime import datetime
 # General import
-import os
 import random
 import traceback
-import hashlib
 import urllib.request
 import time
 from threading import Timer
 from termcolor import colored, cprint
 import pyttsx3
-from lingua_franca import load_language, set_default_lang, parse
+from lingua_franca import load_language, set_default_lang
 
 # Locals imports
 from addon_engine import AddonEngine
 
 load_language('es')
 set_default_lang('es')
-
 
 version = "1.0.0"
 author = "EnmanuelPLC"
@@ -30,19 +27,21 @@ class AssistantCore:
     def __init__(self):
         self.alive = True
         self.is_online = None
-        self.online_check = threading.Thread(target=self.check_internet, args=(self,))
+        self.online_check = threading.Thread(target=self.check_internet)
         self.log_policy = 'all'
         self.assistant_listen_names = "vanesa|vanessa|vane".split('|')
+        self.addons_req_online = ()
         self.state = ''
         self.user = {
-            "name": 'Enmanuel',
+            'name': 'Enmanuel',
             'favorite_app_paths': {
                 'music_player': '',
                 'video_player': '',
                 'text_editor': ''
             }
         }
-        self.minimize = self.maximize = self.to_try = self.to_try_off = self.focus = self.on_wind_action = False
+        self.minimize = self.maximize = self.to_try = self.to_try_off = self.focus = False
+        self.on_wind_action = 'focus'
         self.mic_blocked = False
         self.addons_engine = AddonEngine()
         self.activation_error_counter = 3
@@ -51,10 +50,10 @@ class AssistantCore:
         self.plugin_commands = {}
         self.cmd_not_found = "Comando no encontrado"
         self.cmd_not_found_in_ctx = "Comando no encontrado en contexto"
-        self.cmd_online_reminder = "Recuerda que este comando para funcionar correctamente necesita internet"
+        self.cmd_online_reminder = "No tienes conexión a internet, recuerda que este comando necesita internet para algunas funciones"
         self.media_player_path = ""
         self.version = version
-        self.tts_engine = "pyttsx"
+        self.tts_engine = pyttsx3.init()
         self.log_policy = "all"
         self.last_say = ""
         self.last_action = ""
@@ -66,22 +65,23 @@ class AssistantCore:
         """ Block mick """
         self.mic_blocked = True
 
-    @staticmethod
     def check_internet(self, host='https://www.google.com'):
+        """ Check connectivity """
         while self.alive:
             try:
                 urllib.request.urlopen(host)
                 if not self.is_online:
                     self.say('Conexión a internet detectada')
                     self.is_online = True
-                    self.update_addons_manifiest()
-            except Exception as e:
+                    self.update_addon_manifest()
+            except ConnectionError as e:
                 if self.is_online:
                     self.say('Conexión a internet perdida')
                     self.is_online = False
-                    self.update_addons_manifiest()
+                    self.update_addon_manifest()
             if self.is_online is None:
                 self.is_online = False
+            time.sleep(60)
 
     def commands_ctx(self, command, context):
         """
@@ -99,6 +99,9 @@ class AssistantCore:
                         else:
                             rest_phrase = ""
                         next_context = context[all_keys]
+                        if isinstance(next_context, dict) and next_context['warn']:
+                            next_context['warn']()
+                            next_context = next_context['cmd']
                         self.execute_next(rest_phrase, next_context)
                         return
 
@@ -138,7 +141,7 @@ class AssistantCore:
         self.setup_assistant_voice()
 
     def init_addons(self):
-        """ Load addon """
+        """ Load and setup of all addons """
         from os import listdir
         from os.path import isfile, join
         addon_path = self.addons_engine.addon_engine_root_folder + "/addons"
@@ -156,8 +159,25 @@ class AssistantCore:
                     self.addons_engine.addon_manifests[mod_name] = res
                     cprint(f"Addon: {res['name']} {res['version']} ({mod_name}) started!")
 
-    def update_addons_manifiest(self):
-        self.init_addons()
+    def update_addon_manifest(self):
+        """ Update manifest addons """
+        from os import listdir
+        from os.path import isfile, join
+        addon_path = self.addons_engine.addon_engine_root_folder + "/addons"
+        files = [f for f in listdir(addon_path) if isfile(join(addon_path, f))]
+
+        for addon_req_online in self.addons_req_online:
+            for file in files:
+                if file.endswith(".py") and file[:-3] == addon_req_online:
+                    addon_ready = self.addons_engine.init_addon(addon_req_online)
+                    if addon_ready:
+                        mod_name = addon_ready[0]
+                        res = addon_ready[1]
+                        self.process_addon_manifest(mod_name, res)
+                        self.addons_engine.addon_manifests[mod_name] = res
+                        cprint(f"Addon: {res['name']} {res['version']} ({mod_name}) updated!")
+                    else:
+                        cprint(f"Addon: {addon_req_online} not updated!")
 
     def process_addon_manifest(self, modname, manifest):
         """
@@ -167,11 +187,14 @@ class AssistantCore:
         plugin_req_online = True
         if "require_online" in manifest:
             plugin_req_online = manifest["require_online"]
+            if plugin_req_online:
+                if modname not in self.addons_req_online:
+                    self.addons_req_online += (modname,)
 
         if "commands" in manifest:
             for cmd in manifest["commands"].keys():
                 if not self.is_online and plugin_req_online:
-                    self.commands[cmd] = self.stub_online_required
+                    self.commands[cmd] = {'cmd': manifest["commands"][cmd], 'warn': self.stub_online_required}
                 else:
                     self.commands[cmd] = manifest["commands"][cmd]
 
@@ -180,14 +203,11 @@ class AssistantCore:
                 else:
                     self.plugin_commands[modname] = [cmd]
 
-    def stub_online_required(self, core, phrase):
-        """
-        :param core:
-        :param phrase:
-        """
+    def stub_online_required(self):
+        """ Say need online to proper functionality of addon """
         self.say(self.cmd_online_reminder)
 
-    def print_error(self, err_txt, e: Exception|None = None):
+    def print_error(self, err_txt, e: Exception | None = None):
         """
         :param err_txt:
         :param e:
@@ -202,13 +222,9 @@ class AssistantCore:
         """
         cprint(txt, "red")
 
-    # ----------- text-to-speech functions ------
     def setup_assistant_voice(self):
-        """
-        Setting up assistant voice engine
-        """
+        """ Setting up assistant voice engine """
         try:
-            self.tts_engine = pyttsx3.init()
             voices = self.tts_engine.getProperty("voices")
             if isinstance(voices, list):
                 for voice in voices:
@@ -220,7 +236,6 @@ class AssistantCore:
             self.tts_engine.setProperty("volume", 1.0)
         except Exception as e:
             self.print_error("Error setting up TTS (tts_engine)", e)
-
             from sys import platform
             if platform == "linux" or platform == "linux2":
                 cprint("Only windows is supported by now", "red")
@@ -252,7 +267,6 @@ class AssistantCore:
         from utils.all_num_to_text import all_num_to_text
         return all_num_to_text(text)
 
-    # -------- main function ----------
     def execute_next(self, command, context):
         """
         :param command:
@@ -288,24 +302,24 @@ class AssistantCore:
 
         self.commands_ctx(command, context)
 
-    def call_ext_func(self, funcparam):
+    def call_ext_func(self, func_param):
         """
-        :param funcparam:
+        :param func_param:
         """
-        if isinstance(funcparam, tuple):
-            funcparam[0](self, funcparam[1])
+        if isinstance(func_param, tuple):
+            func_param[0](self, func_param[1])
         else:
-            funcparam(self)
+            func_param(self)
 
-    def call_ext_func_phrase(self, phrase, funcparam):
+    def call_ext_func_phrase(self, phrase, func_param):
         """
         :param phrase:
-        :param funcparam:
+        :param func_param:
         """
-        if isinstance(funcparam, tuple):
-            funcparam[0](self, phrase, funcparam[1])
+        if isinstance(func_param, tuple):
+            func_param[0](self, phrase, func_param[1])
         else:
-            funcparam(self, phrase)
+            func_param(self, phrase)
 
     def run_input_str(self, voice_input_str, func_before_run_cmd=None):
         """
@@ -319,7 +333,7 @@ class AssistantCore:
             print("Input: ", voice_input_str)
         else:
             if isinstance(self.context, dict):
-                print("Input (in comands context) - ", voice_input_str)
+                print("Input (in commands context): ", voice_input_str)
             else:
                 print("Input (in {} context)".format(self.context.__name__), voice_input_str)
 
@@ -363,22 +377,24 @@ class AssistantCore:
         if func:
             func()
         self.contextTimer = None
-        # if self.context.__name__ == "commands_ctx":
-        #     self.say('Si me llamas y no me dices nada, existen 2 opciones, una es que estás indeciso al ver que soy capaz de hacer muchas cosas, o dos, te intriga lo que te pueda decir; a que si')
-        self.context_clear()
-        print("Contexto limpiado, vanessa vuelve a su estado 'escuchando'")
+        if isinstance(self.context, dict):
+            self.say('Si me llamas y no me dices nada, existen 2 opciones, una es que estás indeciso al ver que soy capaz de hacer muchas cosas, o te intriga lo que te pueda decir; a que si')
+        elif isinstance(self.context, object):
+            self.say('Bueno parece que ya no me necesitas; recuerda que estoy aquí para lo que sea')
+        else:
+            self.say('He limpiado el contexto de forma rara')
+            print(self.context)
+            print(type(self.context))
         self.mic_blocked = False
+        self.context_clear()
 
     def context_clear(self):
-        """
-        Clearing current context
-        """
+        """ Clearing current context """
         self.context = None
         if self.context_timer is not None:
             self.context_timer.cancel()
             self.context_timer = None
 
-    # ----------- display info functions ------
     def display_init_info(self):
         """ Displays all info """
         cprint("AssistantCore v{0}:".format(version), "blue", end=' ')
@@ -391,4 +407,3 @@ class AssistantCore:
         for plugin in self.plugin_commands:
             self.format_print_key_list(plugin, self.plugin_commands[plugin])
         cprint("#" * 80, "blue")
-        self.online_check.start()

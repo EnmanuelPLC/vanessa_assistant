@@ -22,7 +22,6 @@ except ImportError:
 
 
 class SysTrayIcon(object):
-    """TODO"""
     QUIT = 'QUIT'
     SPECIAL_ACTIONS = [QUIT, 'Show']
 

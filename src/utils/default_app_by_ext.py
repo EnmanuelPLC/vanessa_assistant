@@ -1,20 +1,22 @@
-from winreg import HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, OpenKey, QueryValueEx, ConnectRegistry
+from winreg import HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx, ConnectRegistry
 
 
 video_ext = ['m4v', 'mp4', 'mkv', 'mpg', 'mpeg', 'avi', '3gp']
 music_ext = ['mp3', 'm4r', 'm4a', 'wav', 'ogg']
+doc_ext = ['doc', 'docx', 'ppt', 'pptx', 'xlsx']
+compress_ext = ['zip', 'rar', 'tar']
 browser_ext = ['url', 'http', 'https']
 
 
 def get_default_app_path(ext):
     launch_path = ""
-    if ext in video_ext:
+    if ext in video_ext or ext in music_ext:
         key = HKEY_CURRENT_USER
-        registry_default_path = r'Software\Classes\.'+ext
-        value = None
-    elif ext in music_ext:
-        key = HKEY_LOCAL_MACHINE
-        registry_default_path = r'Software\Classes\.'+ext
+        registry_default_path = r'Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.' + ext + r'\UserChoice'
+        value = 'ProgId'
+    elif ext in doc_ext or ext in compress_ext:
+        key = HKEY_CLASSES_ROOT
+        registry_default_path = r'.' + ext
         value = None
     elif ext in browser_ext:
         key = HKEY_CURRENT_USER

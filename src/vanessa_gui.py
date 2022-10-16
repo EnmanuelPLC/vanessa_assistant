@@ -1,34 +1,19 @@
 """  Vanessa Assistant main GUI """
-import os.path
 import threading
+
+from kivy import Config
 from kivy.app import App
-# from kivy.uix.gridlayout import GridLayout
-# from kivy.uix.widget import Widget
-# from kivy.uix.label import Label
-# from kivy.uix.image import Image
-# from kivy.uix.button import Button
-# from kivy.uix.textinput import TextInput
-# from kivy.lang import Builder
-from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.screenmanager import ScreenManager, Screen, CardTransition
 from kivy.clock import Clock, ClockBase
 from vanessa_assistant import VanessaAssistant as Vanessa
 from kivy.core.window import Window
 from kivy.animation import Animation
-from KivyOnTop import register_topmost, unregister_topmost
-from kivy.config import Config
-
-# import itertools
-# import glob
-# from sys_tray import SysTrayIcon
-
-
+from KivyOnTop import register_topmost
 from pystray import Icon, Menu, MenuItem as Item
-from PIL import Image, ImageDraw
-
+from PIL import Image
 from plyer import notification
 
-global try_icon
+from config import AssistantConf
 
 
 def create_image(icon):
@@ -55,24 +40,27 @@ class VanessaUIManager(ScreenManager):
 
     def update_interface(self, _exact_timing, **_kwargs):
         """ Update main label """
-        # if not self.assistant_listening.is_alive():
         self.screens[0].ids.main_label.text = self.assistant.state
-        #     self.update_interval.cancel()
-        if self.assistant.minimize and self.assistant.on_wind_action:
+        if self.assistant.minimize:
             vanessa.minimize()
-            self.assistant.on_wind_action = False
-        elif self.assistant.maximize and self.assistant.on_wind_action:
+            self.assistant.on_wind_action = 'minimize'
+            self.assistant.minimize = False
+        elif self.assistant.maximize:
             vanessa.maximize()
-            self.assistant.on_wind_action = False
-        elif self.assistant.to_try and self.assistant.on_wind_action:
+            self.assistant.on_wind_action = 'maximize'
+            self.assistant.maximize = False
+        elif self.assistant.to_try:
             vanessa.to_try()
-            self.assistant.on_wind_action = False
-        elif self.assistant.to_try_off and self.assistant.on_wind_action:
+            self.assistant.on_wind_action = 'to_try'
+            self.assistant.to_try = False
+        elif self.assistant.to_try_off:
             vanessa.showing()
-            self.assistant.on_wind_action = False
-        elif self.assistant.focus and not self.assistant.on_wind_action:
-            self.assistant.on_wind_action = True
+            self.assistant.on_wind_action = 'to_try_off'
+            self.assistant.to_try_off = False
+        elif self.assistant.focus:
             vanessa.set_focus()
+            self.assistant.on_wind_action = 'focus'
+            self.assistant.focus = False
         elif vanessa.close or not self.assistant.alive:
             vanessa.stop()
         else:
@@ -86,16 +74,20 @@ class VanessaUIManager(ScreenManager):
                 self.screens[0].animating = False
                 self.screens[0].animate_vanessa_border(self.screens[0].ids.vanessa_img.canvas.before.children[0], False)
 
+    def setup_assistant(self, btn):
+        """ Reset assistant instance """
+        self.assistant.say('Hola, yo soy vanessa, tu asistente de voz personalizable que te ayudará en la interacción con los dispositivos de cómputo')
+        self.assistant.say('Para empezar a prestarte mi servicio necesito saber algunas cosas')
+        self.assistant.say('Como te llamas?')
+
+        self.start_assistant()
+
     def start_assistant(self):
         """ Start assistant """
         if self.assistant_listening:
             self.assistant_listening.join()
         self.assistant_listening = threading.Thread(target=self.load_assistant)
         self.assistant_listening.start()
-
-    def restart_assistant(self, btn):
-        """ xds """
-        self.start_assistant()
 
     def stop_assistant(self, btn=None):
         """ Stop assistant """
@@ -112,15 +104,20 @@ class VanessaMainUI(Screen):
 
     def animate_vanessa_border(self, widget, repeat):
         if repeat:
-            self.vanessa_border_animation = Animation(
-                rgba=(1, 0, 1, 1),
-                duration=1.5,
-            ) + Animation(rgba=(0, 0, 0, 1), duration=3.5)
+            self.vanessa_border_animation = Animation(rgba=(1, 0, 1, 1), duration=2) + Animation(rgba=(0, 0, 0, 1), duration=1)
         else:
             self.vanessa_border_animation.stop(widget)
             self.vanessa_border_animation = Animation(rgba=(0, 0, 0, 1), duration=.5)
         self.vanessa_border_animation.repeat = repeat
         self.vanessa_border_animation.start(widget)
+
+    def effect_off_btn(self, typ='on', *args):
+        img = args[0][0]
+        if typ == 'on':
+            anim = Animation(opacity=.5, duration=.25)
+        else:
+            anim = Animation(opacity=1, duration=.25)
+        anim.start(img)
 
 
 class VanessaSettingsUI(Screen):
@@ -132,15 +129,21 @@ class VanessaSettingsUI(Screen):
         super().__init__(**kw)
 
     def set_player_path(self, root, type):
-        if not len(root.ids.file_chooser.selection) > 0:
-            return
-        if type == 'video':
-            self.ids.video_player_cfg_btn.text = root.ids.file_chooser.selection[0]
-        else:
-            self.ids.music_player_cfg_btn.text = root.ids.file_chooser.selection[0]
+        if len(root.ids.file_chooser.selection) > 0:
+            if type == 'video':
+                vanessa.root.assistant.user['favorite_app_paths']['video_player'] = root.ids.file_chooser.selection[0]
+            elif type == 'music':
+                vanessa.root.assistant.user['favorite_app_paths']['music_player'] = root.ids.file_chooser.selection[0]
+            else:
+                vanessa.root.assistant.user['favorite_app_paths']['text_editor'] = root.ids.file_chooser.selection[0]
 
-    def is_sys_file(self, directory, filename):
+    def is_exe_and_not_sys_file(self, directory, filename):
         return not filename.endswith('.sys') and not filename.endswith('.tmp') and filename.endswith('.exe')
+
+    def update_file_list_entry(self, args):
+        file_text_1 = args[1].children[0]
+        file_text_2 = args[1].children[1]
+        file_text_1.color = file_text_2.color = (0, 0, 0, 1)
 
 
 class VanessaAboutUI(Screen):
@@ -158,9 +161,9 @@ class VanessaRegisterUI(Screen):
 
 
 class VanessaApp(App):
-    """ Main Assistant window """
+    """ Vanessa Assistant App """
     Window.clearcolor = (1, 1, 1, 1)
-    Window.size = (1024, 720)
+    Window.size = (512, 700)
     __author__ = 'Enmanuel'
     __name__ = 'Vanessa Assistant'
     __version__ = '1.0.0'
@@ -168,13 +171,12 @@ class VanessaApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.close = False
-        self.menu_opt = Menu(
-            Item('Cerrar Vanessa', self.exit)
-        )
-        self.icon = 'assets/vanessa_image.png'
-        self.try_icon = Icon(self.__name__, create_image('assets/vanessa.ico'), menu=self.menu_opt)
+        self.menu_opt = Menu(Item('Cerrar Vanessa', self.exit))
+        self.icon = 'assets/images/vanessa_image.png'
+        self.try_icon = Icon(self.__name__, create_image('assets/icons/vanessa.ico'), menu=self.menu_opt)
         self.try_icon.title = f'{self.__name__}\n\nBy {self.__author__}\n\nVersion: {self.__version__}'
         self.on_try = False
+        self.assistant_config = AssistantConf()
 
     def restart_icon_try(self):
         if self.try_icon is not None:
@@ -182,23 +184,31 @@ class VanessaApp(App):
             if self.try_icon.visible:
                 self.try_icon.stop()
             del self.try_icon
-            self.try_icon = Icon(self.__name__, create_image('assets/vanessa.ico'), menu=self.menu_opt)
+            self.try_icon = Icon(self.__name__, create_image('assets/icons/vanessa.ico'), menu=self.menu_opt)
             self.try_icon.title = f'{self.__name__}\n\nBy {self.__author__}\n\nVersion: {self.__version__}'
+
+    def on_minimize(self):
+        vanessa.root.assistant.minimize = True
+        pass
 
     def on_start(self):
         """ On App Load """
         Config.set('kivy', 'desktop', 1)
         Config.set('kivy', 'exit_on_escape', 0)
         Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
-        Config.set('graphics', 'minimum_width', 1024)
-        Config.set('graphics', 'minimum_height', 720)
-        register_topmost(Window, 'Vanessa')
+        Config.set('graphics', 'minimum_width', 512)
+        Config.set('graphics', 'minimum_height', 700)
         Config.write()
-        self.root.start_assistant()
+        register_topmost(Window, 'Vanessa')
+        if self.assistant_config.first_use:
+            self.root.setup_assistant()
+        else:
+            self.root.start_assistant()
 
-    def exit(self, xd, **kwargs):
+    def exit(self, _xd=None, **kwargs):
         self.root.assistant.alive = False
-        self.try_icon.stop()
+        if _xd:
+            self.try_icon.stop()
         self.close = True
 
     def showing(self, **kwargs):
@@ -239,7 +249,8 @@ class VanessaApp(App):
             self.on_try = False
 
     def set_focus(self):
-        self.restart_icon_try()
+        if not self.try_icon:
+            self.restart_icon_try()
         self.root_window.restore()
         if self.on_try:
             self.root_window.restore()

@@ -1,10 +1,7 @@
+""" Date and time """
 from datetime import datetime
-from utils.num_to_text_ru import num2text
 from assistant import AssistantCore
-import os
-from lingua_franca.format import nice_date, nice_date_time, nice_time
-
-modname = os.path.basename(__file__)[:-3]  # calculating modname
+from lingua_franca.format import nice_date, nice_time
 
 
 def start(core: AssistantCore):
@@ -13,23 +10,12 @@ def start(core: AssistantCore):
         "version": "1.2",
         "require_online": False,
 
-        "default_options": {
-            "sayNoon": False,
-            "skipUnits": False,
-            "unitsSeparator": ", ",
-            "skipMinutesWhenZero": True,
-        },
-
         "commands": {
             "hoy": play_date,
             "hora": play_time,
         }
     }
     return manifest
-
-
-def start_with_options(core: AssistantCore, manifest: dict):
-    pass
 
 
 def play_date(core: AssistantCore, phrase: str):
