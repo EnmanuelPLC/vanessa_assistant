@@ -1,7 +1,6 @@
 """ Core assistant logic """
 import threading
 from datetime import datetime
-# General import
 import random
 import traceback
 import urllib.request
@@ -32,14 +31,7 @@ class AssistantCore:
         self.assistant_listen_names = "vanesa|vanessa|vane".split('|')
         self.addons_req_online = ()
         self.state = ''
-        self.user = {
-            'name': 'Enmanuel',
-            'favorite_app_paths': {
-                'music_player': '',
-                'video_player': '',
-                'text_editor': ''
-            }
-        }
+        self.user = {'name': ''}
         self.minimize = self.maximize = self.to_try = self.to_try_off = self.focus = False
         self.on_wind_action = 'focus'
         self.mic_blocked = False
@@ -59,7 +51,7 @@ class AssistantCore:
         self.last_action = ""
         self.context = None
         self.context_timer = None
-        self.context_default_duration = 30
+        self.context_default_duration = 60
 
     def block_mic(self):
         """ Block mick """
@@ -74,7 +66,7 @@ class AssistantCore:
                     self.say('Conexión a internet detectada')
                     self.is_online = True
                     self.update_addon_manifest()
-            except ConnectionError as e:
+            except Exception:
                 if self.is_online:
                     self.say('Conexión a internet perdida')
                     self.is_online = False
@@ -89,15 +81,14 @@ class AssistantCore:
         :param command:
         :return:
         """
+        if isinstance(command, list):
+            command = ' '.join(command)
         try:
             for all_keys in context.keys():
                 keys = all_keys.split("|")
                 for key in keys:
-                    if command == key:
-                        if key == 'hola':
-                            rest_phrase = 'Enmanuel'
-                        else:
-                            rest_phrase = ""
+                    if key in command:
+                        rest_phrase = ""
                         next_context = context[all_keys]
                         if isinstance(next_context, dict) and next_context['warn']:
                             next_context['warn']()
@@ -108,7 +99,7 @@ class AssistantCore:
             for all_keys in context.keys():
                 keys = all_keys.split("|")
                 for key in keys:
-                    if command.find(key) >= 0:
+                    if key in command:
                         rest_phrase = command[(len(key) + 1):]
                         next_context = context[all_keys]
                         self.execute_next(rest_phrase, next_context)
@@ -286,14 +277,14 @@ class AssistantCore:
                     greeting = f"Buenas noches {self.user['name']}"
                 else:
                     greeting = f"Buenas {self.user['name']}"
-                serv_arr = [f'{greeting}, en que puedo servirle?', f'{greeting}, que puedo hacer por tí?', f'{greeting}, qué hacemos hoy?']
+                serv_arr = [f'{greeting}, en que puedo servirle?', f'{greeting}, que puedo hacer por tí?', f'{greeting}, qué hacemos hoy?', f'{greeting}, que quieres hacer?']
                 self.say(serv_arr[random.randint(0, len(serv_arr) - 1)])
-                self.context_set(self.commands, 15)
+                self.context_set(self.commands, 30)
                 return
-            elif command == '':
-                return
-            else:
+            elif isinstance(command, list):
                 context = self.commands
+            else:
+                return
 
         if not isinstance(context, dict):
             self.context_clear()
@@ -342,9 +333,16 @@ class AssistantCore:
             have_run = False
             command_options = ''
             if self.context is None:
-                if voice_input[0] in self.assistant_listen_names or voice_input[0] == 'hola' and len(voice_input) > 1 and voice_input[1] in self.assistant_listen_names:
-                    command_options = 'activation'
-                    print("Input (Assistant Activation): ", voice_input_str)
+                if len(voice_input) == 1:
+                    if voice_input[0] in self.assistant_listen_names:
+                        command_options = 'activation'
+                        print("Input (Assistant Activation): ", voice_input_str)
+                    else:
+                        return
+                elif len(voice_input) > 1:
+                    if voice_input[0] in self.assistant_listen_names:
+                        command_options = ' '.join(voice_input[1:]).split(' ', -1)
+                        print("Input (Assistant direct cmd): ", voice_input_str)
                 if func_before_run_cmd is not None:
                     func_before_run_cmd()
                 self.execute_next(command_options, None)
@@ -365,7 +363,7 @@ class AssistantCore:
         :param context:
         :param duration:
         """
-        self.state = 'esperando comando'
+        self.state = 'esperando. . .'
         if duration is None:
             duration = self.context_default_duration
         self.context_clear()
@@ -376,7 +374,6 @@ class AssistantCore:
     def _context_clear_timer(self, func):
         if func:
             func()
-        self.contextTimer = None
         if isinstance(self.context, dict):
             self.say('Si me llamas y no me dices nada, existen 2 opciones, una es que estás indeciso al ver que soy capaz de hacer muchas cosas, o te intriga lo que te pueda decir; a que si')
         elif isinstance(self.context, object):

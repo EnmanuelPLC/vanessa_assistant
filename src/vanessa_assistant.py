@@ -8,12 +8,11 @@ import sounddevice as sd
 import vosk
 
 from assistant import AssistantCore as Assistant
+from config import AssistantConf
 
 
 class VanessaAssistant(Assistant):
-    """
-    Vanessa Class Main Class
-    """
+    """ Vanessa Wrapper Class """
     __name__ = 'Vanessa'
     __version__ = '1.0.0'
     __author__ = 'EnmanuelPLC'
@@ -26,12 +25,15 @@ class VanessaAssistant(Assistant):
     def __init__(self):
         super().__init__()
         self.device = sd.query_devices(kind='input')
-        self.samplerate = int(self.device['default_samplerate'])  # type: ignore
+        self.samplerate = int(self.device['default_samplerate'])
         if self.dev:
             self.model = 'model_es_small'
         self.vosk_model = vosk.Model(self.model)
-        vosk.open_dll()
         self.voice_recognition = vosk.KaldiRecognizer(self.vosk_model, self.samplerate)
+        self.config = AssistantConf()
+        self.first_use = self.config.first_use
+        if not self.first_use:
+            self.user['name'] = self.config.read('user', 'name')
         self.init_with_addons()
         print('#' * 25)
         print('Asistente en línea!!')
@@ -59,6 +61,8 @@ class VanessaAssistant(Assistant):
                             self.mic_blocked = False
                     else:
                         pass
+                    if not self.first_use and self.user['name'] != self.config.read('user', 'name'):
+                        self.user['name'] = self.config.read('user', 'name')
             print('Vanessa Terminated')
             exit(0)
 

@@ -1,3 +1,5 @@
+""" Get default app by file ext """
+
 from winreg import HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, HKEY_CLASSES_ROOT, OpenKey, QueryValueEx, ConnectRegistry
 
 

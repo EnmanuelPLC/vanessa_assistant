@@ -40,17 +40,18 @@ def get_open_window():
     return False
 
 
-def open_browser(core: AssistantCore, phrase: str):
+def open_browser(core: AssistantCore, _phrase: str):
     """ Open browser window """
     global browser_window
     already = get_open_window()
 
-    if not core.minimize:
-        core.minimize = True
-        core.say('Voy a ocultarme para trabajar en el navegador')
     if already:
         set_browser_focus()
         core.say("He detectado que el navegador ya estaba abierto")
+        if get_browser_focus():
+            if not core.minimize:
+                core.minimize = True
+                core.say('Voy a ocultarme para trabajar en el navegador')
     else:
         app = Application(backend="uia").start(browser)
         browser_window = app.window(found_index=0)
@@ -103,21 +104,20 @@ def what_to_search(core: AssistantCore, phrase: str):
         set_browser_focus()
     keyboard.send_keys('^l')
     default_search_engine = 'www.google.com/search?q='
-    typing = phrase.split(' ', -1)
     if phrase.find("video") >= 0 or phrase.find("vídeo") >= 0:
-        final_search = default_search_engine + ' {SPACE}'.join(typing) + '&source=lnms&tbm=vid' + '{ENTER}'
+        final_search = default_search_engine + phrase + '&source=lnms&tbm=vid{ENTER}'
     elif phrase.find("fotos") >= 0 or phrase.find("imágenes") >= 0:
-        final_search = default_search_engine + ' {SPACE}'.join(typing) + '&source=lnms&tbm=isch' + '{ENTER}'
+        final_search = default_search_engine + phrase + '&source=lnms&tbm=isch{ENTER}'
     elif phrase.find("noticias") >= 0 or phrase.find("eventos") >= 0:
-        final_search = default_search_engine + ' {SPACE}'.join(typing) + '&source=lnms&tbm=nws' + '{ENTER}'
+        final_search = default_search_engine + phrase + '&source=lnms&tbm=nws{ENTER}'
     elif phrase.find("libro") >= 0 or phrase.find("literatura") >= 0:
-        final_search = default_search_engine + ' {SPACE}'.join(typing) + '&source=lnms&tbm=bks' + '{ENTER}'
+        final_search = default_search_engine + phrase + '&source=lnms&tbm=bks{ENTER}'
     elif phrase.find("mapa") >= 0 or phrase.find("ubicación") >= 0 or phrase.find("localización") >= 0:
-        final_search = 'https://www.google.com/maps/search/' + ' {SPACE}'.join(typing) + '{ENTER}'
+        final_search = 'https://www.google.com/maps/search/' + phrase + '{ENTER}'
     else:
-        final_search = default_search_engine + ' {SPACE}'.join(typing) + '&source=lnms&hl=es' + '{ENTER}'
-    keyboard.send_keys(final_search)
-    core.say("Buscando en google " + ' '.join(typing))
+        final_search = default_search_engine + phrase + '&source=lnms&hl=es{ENTER}'
+    keyboard.send_keys(final_search, with_spaces=True)
+    core.say("Buscando en google " + phrase)
     core.context_set(control_browser)
 
 

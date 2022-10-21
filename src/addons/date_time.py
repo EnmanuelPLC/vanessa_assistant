@@ -11,24 +11,18 @@ def start(core: AssistantCore):
         "require_online": False,
 
         "commands": {
-            "hoy": play_date,
-            "hora": play_time,
+            "a como estamos hoy|hoy que es|fecha": play_date,
+            "hora|el reloj": play_time,
         }
     }
     return manifest
 
 
 def play_date(core: AssistantCore, phrase: str):
+    weekdays = ['Lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
     now = datetime.now()
-    txt = "Hoy es " + nice_date(now, 'es')
-    txt_arr = txt.split(',', -1)
-    txt_arr[0] += ","
-    txt_arr[1] = txt_arr[1].strip()
-    temp2 = txt_arr[1].split(' ', 1)
-    temp2.reverse()
-    txt_arr[1] = ' de '.join(temp2)
-    txt_arr[2] = " del año " + str(now.year)
-    core.say(' '.join(txt_arr))
+    txt = f"Hoy es {weekdays[now.weekday()]}; {str(now.day)} del mes {now.month}; del {now.year}"
+    core.say(txt)
 
 
 def play_time(core: AssistantCore, phrase: str):

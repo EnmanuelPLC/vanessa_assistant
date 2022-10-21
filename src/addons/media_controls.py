@@ -1,5 +1,9 @@
+""" Media controls """
 import pyautogui
+from random import randint
 from assistant import AssistantCore
+
+responses = ['ok', 'hecho']
 
 
 def start(core: AssistantCore):
@@ -20,7 +24,7 @@ def start(core: AssistantCore):
             "silenciar|apagar sonido": toggle_mute,
             "bajar volumen|reducir volumen": (volume_downX, 5),
             "subir volumen|aumentar volumen": (volume_upX, 5),
-            "cerrar vídeo|cerrar música": close,
+            "cerrar vídeo|cerrar video|quitar video| quitar reproducción|cerrar reproductor|cerrar música": close,
             "adelantar": forward,
             "atrasar": backward,
         }
@@ -34,8 +38,8 @@ def play_pause(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print("Reproduccion en pausa")
     pyautogui.press("playpause")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def play_stop(core: AssistantCore, phrase: str):
@@ -43,8 +47,8 @@ def play_stop(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print("Reproduccion detenida")
     pyautogui.press("stop")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def play_next(core: AssistantCore, phrase: str):
@@ -52,8 +56,8 @@ def play_next(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print("Reproducir siguiente")
     pyautogui.press("nexttrack")
+    core.say('Hecho')
 
 
 def play_prev(core: AssistantCore, phrase: str):
@@ -61,8 +65,8 @@ def play_prev(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print("Reproducir anterior")
     pyautogui.press("prevtrack")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def toggle_mute(core: AssistantCore, phrase: str):
@@ -71,6 +75,7 @@ def toggle_mute(core: AssistantCore, phrase: str):
     :param phrase:
     """
     pyautogui.press("volumemute")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def volume_upX(core: AssistantCore, phrase: str, param: int):
@@ -81,6 +86,7 @@ def volume_upX(core: AssistantCore, phrase: str, param: int):
     """
     for i in range(param):
         pyautogui.press("volumeup")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def volume_downX(core: AssistantCore, phrase: str, param: int):
@@ -91,6 +97,7 @@ def volume_downX(core: AssistantCore, phrase: str, param: int):
     """
     for i in range(param):
         pyautogui.press("volumedown")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def forward(core: AssistantCore, phrase: str):
@@ -98,8 +105,8 @@ def forward(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print('Adelantando reproduccion')
     pyautogui.press("right")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def backward(core: AssistantCore, phrase: str):
@@ -107,8 +114,8 @@ def backward(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print('Adelantando reproduccion')
     pyautogui.press("left")
+    core.say(responses[randint(0, len(responses) - 1)])
 
 
 def close(core: AssistantCore, phrase: str):
@@ -116,4 +123,5 @@ def close(core: AssistantCore, phrase: str):
     :param core:
     :param phrase:
     """
-    print('Reproduccion cerrada')
+    pyautogui.hotkey('alt', 'f4')
+    core.say(responses[randint(0, len(responses) - 1)])

@@ -1,5 +1,6 @@
 """ Config handler of entire assistant """
 import configparser as cfg
+import os.path
 from os.path import isfile
 
 
@@ -12,7 +13,9 @@ class AssistantConf:
 
     def __init__(self):
         self.first_use = False
-        self.app_conf = self.user_conf = self.sys_conf = cfg.ConfigParser()
+        self.app_conf = cfg.ConfigParser()
+        self.user_conf = cfg.ConfigParser()
+        self.sys_conf = cfg.ConfigParser()
         self.init_conf_files()
 
     def init_conf_files(self):
@@ -28,9 +31,36 @@ class AssistantConf:
         self.sys_conf.read('conf/sys.ini')
 
     def _create_cfg_files(self):
+        if not os.path.isdir('conf'):
+            os.mkdir('conf')
         with open('conf/assistant.ini', 'w+') as configfile:
+            self.app_conf.add_section('assistant')
             self.app_conf.write(configfile)
         with open('conf/user.ini', 'w+') as configfile:
+            self.user_conf.add_section('user')
             self.user_conf.write(configfile)
         with open('conf/sys.ini', 'w+') as configfile:
+            self.sys_conf.add_section('system')
             self.sys_conf.write(configfile)
+
+    def save(self, section, field, value):
+        if section == 'assistant':
+            self.app_conf['assistant'][field] = value
+        elif section == 'system':
+            self.sys_conf['system'][field] = value
+        elif section == 'user':
+            self.user_conf['user'][field] = value
+            with open('conf/user.ini', 'w+') as configfile:
+                self.user_conf.write(configfile)
+        else:
+            print(f"There's no configuration available for {section} type")
+
+    def read(self, section, field):
+        if section == 'assistant':
+            return self.app_conf[section][field]
+        elif section == 'system':
+            return self.sys_conf[section][field]
+        elif section == 'user':
+            return self.user_conf[section][field]
+        else:
+            print(f"There's no configuration available for {section} type")

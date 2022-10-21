@@ -1,6 +1,7 @@
-from date_time import datetime
-from assistant import AssistantCore
+""" Game addon """
+
 import random
+from assistant import AssistantCore
 
 
 def start(core: AssistantCore):
