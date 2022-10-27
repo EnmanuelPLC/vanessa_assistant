@@ -3,7 +3,6 @@ Addon Engine logic
 """
 
 import importlib
-import json
 import os
 import traceback
 from termcolor import cprint

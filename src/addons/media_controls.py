@@ -3,7 +3,7 @@ import pyautogui
 from random import randint
 from assistant import AssistantCore
 
-responses = ['ok', 'hecho']
+responses = ['ok', 'hecho', 'vale']
 
 
 def start(core: AssistantCore):

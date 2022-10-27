@@ -1,6 +1,5 @@
 /.idea/
 /__pycache__/
-/model_es_small/
 /model/
+/model_big/
 /others/
-/vanessa_env/
