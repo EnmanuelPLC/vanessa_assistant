@@ -1,3 +1,5 @@
+""" Personal talking addon """
+import os
 import random
 from assistant import AssistantCore
 
@@ -10,6 +12,7 @@ def start(core: AssistantCore):
 
         "commands": {
             "como estas|cómo estás|como estás|cómo estas": how_are_you,
+            "manual de uso|abre el manual": vanessa_doc
         }
     }
     return manifest
@@ -24,14 +27,19 @@ def how_are_you(core: AssistantCore, phrase: str):
     core.context_set(talking)
 
 
+def vanessa_doc(core: AssistantCore, phrase: str):
+    core.say("Abriendo el manual")
+    os.startfile('..\\assets\\manual.pdf')
+
+
 def talking(core: AssistantCore, phrase: str):
     if phrase.find('bien') >= 0:
         core.say('Que bueno escuchar eso, y mejor todavía si estoy aquí para ayudarte, a que si?')
     elif phrase.find('mal') >= 0:
-        core.say('Y eso porque a ver; cuéntame, que te pasa; a lo mejor te puedo ayudar')
+        core.say('Y eso porqué, cuéntame, que te pasa; a lo mejor te puedo ayudar')
         core.context_set(talking_issues)
     else:
-        core.say(f'Oye; o estas bien o estas mal, no me quieras volver loca también tu a mi, que ya con {core.user["name"]} tengo bastante')
+        core.say(f'Oye; o estas bien, o estas mal, no me quieras confundir')
 
 
 def talking_issues(core: AssistantCore, phrase: str):

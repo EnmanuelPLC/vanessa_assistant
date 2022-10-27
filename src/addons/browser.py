@@ -1,10 +1,12 @@
 """ Browser addon """
+import os
 from assistant import AssistantCore
 from pywinauto.application import Application
 from pywinauto import findwindows, keyboard
 from utils.default_app_by_ext import get_default_app_path
 
 global browser_name, browser, browser_window
+browser_window = None
 
 
 def start(_core: AssistantCore):
@@ -48,17 +50,19 @@ def open_browser(core: AssistantCore, _phrase: str):
     if already:
         set_browser_focus()
         core.say("He detectado que el navegador ya estaba abierto")
+    else:
+        Application().start(browser)
+        get_open_window()
+        set_browser_focus()
+        core.say("He iniciado el navegador")
+
+    if _phrase != 'direct':
         if get_browser_focus():
             if not core.minimize:
                 core.minimize = True
                 core.say('Voy a ocultarme para trabajar en el navegador')
-    else:
-        app = Application(backend="uia").start(browser)
-        browser_window = app.window(found_index=0)
-        core.say("He iniciado el navegador")
-
-    core.say("Ahora bien, que quieres hacer?")
-    core.context_set(control_browser)
+        core.say("Ahora bien, que quieres hacer?")
+        core.context_set(control_browser)
 
 
 def control_browser(core: AssistantCore, phrase: str):
@@ -82,24 +86,27 @@ def control_browser(core: AssistantCore, phrase: str):
         keyboard.send_keys('^w')
         core.say("Pestaña cerrada")
         core.context_set(control_browser)
-    elif phrase.find("manual de vanessa") >= 0:
-        core.say("Abriendo el manual de ayuda en el navegador, estoy al tanto")
-
+    elif phrase.find("manual de") >= 0:
+        core.say("Abriendo el manual de uso, estoy al tanto")
+        os.startfile('..\\assets\\manual.pdf')
     elif phrase.find("cerrar navegador") >= 0:
         keyboard.send_keys("^+w")
         core.say("Navegador cerrado")
         core.context_clear()
     elif phrase.find("salir") >= 0:
         core.focus = True
-        core.say('Ok terminamos con el navegador, y ahora que necesitas?')
-        core.context_clear()
+        core.say('Ok, salimos del navegador, y ahora que necesitas?')
+        core.context_set(core.commands)
     else:
-        core.say("Comando del navegador no encontrado, para conocer todos los comandos disponibles diga: manual de vanessa")
+        core.say("Comando del navegador no encontrado, para conocer todos los comandos disponibles diga: manual de uso")
         core.context_set(control_browser)
 
 
 def what_to_search(core: AssistantCore, phrase: str):
     """ Searching in browser """
+    global browser_window
+    if not browser_window:
+        open_browser(core, 'direct')
     if not get_browser_focus():
         set_browser_focus()
     keyboard.send_keys('^l')

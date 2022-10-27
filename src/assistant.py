@@ -1,20 +1,13 @@
 """ Core assistant logic """
 import threading
-from datetime import datetime
-import random
 import traceback
 import urllib.request
 import time
 from threading import Timer
 from termcolor import colored, cprint
 import pyttsx3
-from lingua_franca import load_language, set_default_lang
 
-# Locals imports
 from addon_engine import AddonEngine
-
-load_language('es')
-set_default_lang('es')
 
 version = "1.0.0"
 author = "EnmanuelPLC"
@@ -63,17 +56,21 @@ class AssistantCore:
             try:
                 urllib.request.urlopen(host)
                 if not self.is_online:
+                    self.mic_blocked = True
                     self.say('Conexión a internet detectada')
+                    self.mic_blocked = False
                     self.is_online = True
                     self.update_addon_manifest()
             except Exception:
                 if self.is_online:
+                    self.mic_blocked = True
                     self.say('Conexión a internet perdida')
+                    self.mic_blocked = False
                     self.is_online = False
                     self.update_addon_manifest()
             if self.is_online is None:
                 self.is_online = False
-            time.sleep(60)
+            time.sleep(5)
 
     def commands_ctx(self, command, context):
         """
@@ -81,18 +78,26 @@ class AssistantCore:
         :param command:
         :return:
         """
-        if isinstance(command, list):
-            command = ' '.join(command)
+        # if isinstance(command, list):
+        #     command = ' '.join(command)
         try:
+            if isinstance(command, str):
+                command = command.split(' ')
             for all_keys in context.keys():
                 keys = all_keys.split("|")
                 for key in keys:
                     if key in command:
-                        rest_phrase = ""
+                        command.pop(command.index(key))
+                        rest_phrase = ' '.join(command)
                         next_context = context[all_keys]
                         if isinstance(next_context, dict) and next_context['warn']:
                             next_context['warn']()
                             next_context = next_context['cmd']
+                        self.execute_next(rest_phrase, next_context)
+                    elif key == ' '.join(command):
+                        command = ' '.join(command)
+                        rest_phrase = command.replace(command, '')
+                        next_context = context[all_keys]
                         self.execute_next(rest_phrase, next_context)
                         return
 
@@ -101,6 +106,12 @@ class AssistantCore:
                 for key in keys:
                     if key in command:
                         rest_phrase = command[(len(key) + 1):]
+                        next_context = context[all_keys]
+                        self.execute_next(rest_phrase, next_context)
+                        return
+                    elif key in ' '.join(command):
+                        command = ' '.join(command)
+                        rest_phrase = command.replace(command, '')
                         next_context = context[all_keys]
                         self.execute_next(rest_phrase, next_context)
                         return
@@ -264,34 +275,27 @@ class AssistantCore:
         :param context:
         :return:
         """
+        greeting_cmd = 'hola|buenos días|buenas tardes'
         if context is None:
             if command == 'activation':
-                now: datetime.time = datetime.time(datetime.now())
-                if now.hour <= 6:
-                    greeting = f"Es muy temprano en la mañana {self.user['name']}"
-                elif 6 < now.hour <= 12:
-                    greeting = f"Buenos días {self.user['name']}"
-                elif 12 < now.hour < 20:
-                    greeting = f"Buenas tardes {self.user['name']}"
-                elif 20 <= now.hour < 24:
-                    greeting = f"Buenas noches {self.user['name']}"
-                else:
-                    greeting = f"Buenas {self.user['name']}"
-                serv_arr = [f'{greeting}, en que puedo servirle?', f'{greeting}, que puedo hacer por tí?', f'{greeting}, qué hacemos hoy?', f'{greeting}, que quieres hacer?']
-                self.say(serv_arr[random.randint(0, len(serv_arr) - 1)])
-                self.context_set(self.commands, 30)
+                self.commands[greeting_cmd](self, '')
+                self.context_set(self.commands)
                 return
             elif isinstance(command, list):
                 context = self.commands
             else:
                 return
+        else:
+            if command != '' and command in greeting_cmd + '|'.join(self.assistant_listen_names):
+                self.say('Estoy esperando por ti, dime un comando')
+                self.context_set(self.commands, 30)
+                return
 
         if not isinstance(context, dict):
-            self.context_clear()
             self.call_ext_func_phrase(command, context)
-            return
-
-        self.commands_ctx(command, context)
+            self.context_clear()
+        else:
+            self.commands_ctx(command, context)
 
     def call_ext_func(self, func_param):
         """

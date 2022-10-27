@@ -1,12 +1,10 @@
 """ Game addon """
-
 import random
 from assistant import AssistantCore
 
 
 def start(core: AssistantCore):
     """
-
     :param core:
     :return:
     """
