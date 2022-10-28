@@ -1,12 +1,13 @@
 """ Browser addon """
 import os
+from time import sleep
+
 from assistant import AssistantCore
 from pywinauto.application import Application
 from pywinauto import findwindows, keyboard
 from utils.default_app_by_ext import get_default_app_path
 
-global browser_name, browser, browser_window
-browser_window = None
+global browser_name, browser
 
 
 def start(_core: AssistantCore):
@@ -32,32 +33,31 @@ def init_browser():
 
 def get_open_window():
     """ Check if already opened """
-    global browser_window
     curr_element = findwindows.find_elements()
     for elem in curr_element:
         if browser_name in elem.name.lower():
             app = Application().connect(handle=elem.handle)
-            browser_window = app.window(found_index=0)
-            return True
-    return False
+            return app.window(found_index=0)
+    return None
 
 
 def open_browser(core: AssistantCore, _phrase: str):
     """ Open browser window """
-    global browser_window
     already = get_open_window()
 
     if already:
-        set_browser_focus()
+        set_browser_focus(already)
         core.say("He detectado que el navegador ya estaba abierto")
     else:
         Application().start(browser)
-        get_open_window()
-        set_browser_focus()
+        sleep(3)
+        already = get_open_window()
+        if already:
+            set_browser_focus(already)
         core.say("He iniciado el navegador")
 
     if _phrase != 'direct':
-        if get_browser_focus():
+        if get_browser_focus(already):
             if not core.minimize:
                 core.minimize = True
                 core.say('Voy a ocultarme para trabajar en el navegador')
@@ -67,8 +67,10 @@ def open_browser(core: AssistantCore, _phrase: str):
 
 def control_browser(core: AssistantCore, phrase: str):
     """ Main browser commands"""
-    if not get_browser_focus():
-        set_browser_focus()
+    bws = get_open_window()
+    if bws:
+        if not get_browser_focus(bws):
+            set_browser_focus(bws)
 
     if phrase.find("buscar") >= 0 or phrase.find("investigar") >= 0 or phrase.find("estudiar") >= 0:
         # if core.first_use:
@@ -104,11 +106,13 @@ def control_browser(core: AssistantCore, phrase: str):
 
 def what_to_search(core: AssistantCore, phrase: str):
     """ Searching in browser """
-    global browser_window
-    if not browser_window:
+    bws = get_open_window()
+    if bws:
+        if not get_browser_focus(bws):
+            set_browser_focus(bws)
+    else:
         open_browser(core, 'direct')
-    if not get_browser_focus():
-        set_browser_focus()
+
     keyboard.send_keys('^l')
     default_search_engine = 'www.google.com/search?q='
     if phrase.find("video") >= 0 or phrase.find("vídeo") >= 0:
@@ -130,8 +134,10 @@ def what_to_search(core: AssistantCore, phrase: str):
 
 def open_site(core: AssistantCore, phrase):
     """ Opening some sites """
-    if not get_browser_focus():
-        set_browser_focus()
+    bws = get_open_window()
+    if bws:
+        if not get_browser_focus(bws):
+            set_browser_focus(bws)
     keyboard.send_keys('^l')
     if phrase.find("facebook") >= 0:
         keyboard.send_keys('www.facebook.com')
@@ -180,13 +186,13 @@ def open_site(core: AssistantCore, phrase):
 
 
 # Browser windows actions
-def set_browser_focus():
+def set_browser_focus(bws):
     """ Set focus on browser """
-    wrapper = browser_window.wrapper_object()
+    wrapper = bws.wrapper_object()
     wrapper.set_focus()
 
 
-def get_browser_focus():
+def get_browser_focus(bws):
     """ Get browser focus """
-    wrapper = browser_window.wrapper_object()
+    wrapper = bws.wrapper_object()
     return wrapper.has_focus()

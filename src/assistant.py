@@ -17,6 +17,7 @@ class AssistantCore:
     """ Assistant Core Class """
 
     def __init__(self):
+        self.prev_cmd = None
         self.alive = True
         self.is_online = None
         self.online_check = threading.Thread(target=self.check_internet)
@@ -94,6 +95,7 @@ class AssistantCore:
                             next_context['warn']()
                             next_context = next_context['cmd']
                         self.execute_next(rest_phrase, next_context)
+                        return
                     elif key == ' '.join(command):
                         command = ' '.join(command)
                         rest_phrase = command.replace(command, '')
@@ -259,6 +261,8 @@ class AssistantCore:
         self.tts_engine.startLoop(False)
         self.tts_engine.iterate()
         self.speaking = False
+        if not self.context:
+            self.state = 'escuchando . . .'
 
     @staticmethod
     def all_num_to_text(text: str):
@@ -293,7 +297,8 @@ class AssistantCore:
 
         if not isinstance(context, dict):
             self.call_ext_func_phrase(command, context)
-            self.context_clear()
+            if self.prev_cmd == self.commands:
+                self.context_clear()
         else:
             self.commands_ctx(command, context)
 
@@ -372,6 +377,7 @@ class AssistantCore:
             duration = self.context_default_duration
         self.context_clear()
         self.context = context
+        self.prev_cmd = self.context
         self.context_timer = Timer(duration, self._context_clear_timer, args=[self.block_mic])
         self.context_timer.start()
 
@@ -395,6 +401,7 @@ class AssistantCore:
         if self.context_timer is not None:
             self.context_timer.cancel()
             self.context_timer = None
+        self.state = 'escuchando . . .'
 
     def display_init_info(self):
         """ Displays all info """

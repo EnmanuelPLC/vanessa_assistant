@@ -26,23 +26,32 @@ def play_date(core: AssistantCore, phrase: str):
 
 
 def play_time(core: AssistantCore, phrase: str):
-    now = datetime.time(datetime.now())
+    import time
+    t = time.strftime("%I:%M %p")
+    fir = t.split(":")
+    hour = int(fir[0])
+    min = int(fir[1].split(' ')[0])
+    tz = fir[1].split(' ')[1]
+    now = [hour, min, tz]
     txt = ''
-    if now.hour > 1:
-        if now.hour > 12:
-            txt += f'Son las {now.hour % 12} y {now.minute} '
+    if now[0] > 1:
+        if now[0] > 12:
+            txt += f'Son las {now[0] % 12} y {now[1]} '
         else:
-            txt += f'Son las {now.hour} y {now.minute} '
+            txt += f'Son las {now[0]} y {now[1]} '
     else:
-        txt += f'Son la {now.hour} y {now.minute} '
-    if now.minute > 1:
+        if now[0] == 0:
+            txt += f'Son las 12 y {now[1]} '
+        else:
+            txt += f'Son la una y {now[1]} '
+    if now[0] > 1:
         txt += 'minutos '
     else:
         txt += 'minuto '
-    if now.tzinfo == 'AM':
+    if now[2] == 'AM':
         txt += 'de la mañana'
     else:
-        if now.hour < 20:
+        if now[0] < 20:
             txt += 'de la tarde'
         else:
             txt += 'de la noche'

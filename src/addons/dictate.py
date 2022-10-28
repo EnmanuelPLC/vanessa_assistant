@@ -77,6 +77,7 @@ def start_dictate(core: AssistantCore, phrase: str):
             core.context_set(start_dictate)
     else:
         core.say("Modo dictado cancelado")
+        core.context_clear()
 
 
 def dictate_number(core: AssistantCore, phrase: str):

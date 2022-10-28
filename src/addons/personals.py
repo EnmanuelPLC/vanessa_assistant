@@ -12,10 +12,15 @@ def start(core: AssistantCore):
 
         "commands": {
             "como estas|cómo estás|como estás|cómo estas": how_are_you,
-            "manual de uso|abre el manual": vanessa_doc
+            "manual de uso|abre el manual": vanessa_doc,
+            "quién eres": i_am
         }
     }
     return manifest
+
+
+def i_am(core: AssistantCore, phrase: str):
+    core.say("Yo soy vanessa, tu asistente personal virtual, que te ayudara en tus tareas diarias")
 
 
 def how_are_you(core: AssistantCore, phrase: str):
