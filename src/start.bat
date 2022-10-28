@@ -1,0 +1,1 @@
+start ..\vanessa_env\Scripts\python.exe vanessa_gui.py

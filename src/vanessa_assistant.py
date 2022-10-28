@@ -41,10 +41,11 @@ class VanessaAssistant(Assistant):
         """ Listen method """
         try:
             with sd.RawInputStream(samplerate=self.samplerate, blocksize=4096, dtype='int16', channels=1, callback=self.callback):
-                init_say = ['Estoy en línea, dime, que tienes en mente?', 'Es un placer estar aquí para ti',
-                            'Estoy lista para la acción, solo di mi nombre', 'Que gusto volver a estar contigo, que vamos hacer hoy?',
-                            'Aquí estoy de nuevo, que tienes pensado para hoy?']
-                self.say(init_say[random.randint(0, len(init_say) - 1)])
+                if not self.first_use:
+                    init_say = ['Estoy en línea, dime que tienes en mente?', 'Es un placer estar aquí para ti',
+                                'Estoy lista para la acción, solo di mi nombre', 'Que gusto volver a estar contigo, que vamos hacer hoy?',
+                                'Aquí estoy de nuevo, que tienes pensado para hoy?']
+                    self.say(init_say[random.randint(0, len(init_say) - 1)])
                 self.state = 'escuchando . . .'
                 self.online_check.start()
                 while self.alive:
