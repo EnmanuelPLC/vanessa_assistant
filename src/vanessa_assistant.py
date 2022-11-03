@@ -8,7 +8,6 @@ import sounddevice as sd
 import vosk
 
 from assistant import AssistantCore as Assistant
-from config import AssistantConf
 
 
 class VanessaAssistant(Assistant):
@@ -28,10 +27,6 @@ class VanessaAssistant(Assistant):
         self.model = 'model'
         self.vosk_model = vosk.Model(self.model)
         self.voice_recognition = vosk.KaldiRecognizer(self.vosk_model, self.samplerate)
-        self.config = AssistantConf()
-        self.first_use = self.config.first_use
-        if not self.first_use:
-            self.user['name'] = self.config.read('user', 'name')
         self.init_with_addons()
         print('#' * 25)
         print('Asistente en línea!!')

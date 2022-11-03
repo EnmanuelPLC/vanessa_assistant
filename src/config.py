@@ -12,7 +12,6 @@ class AssistantConf:
     sys_conf: cfg.ConfigParser
 
     def __init__(self):
-        self.first_use = False
         self.app_conf = cfg.ConfigParser()
         self.user_conf = cfg.ConfigParser()
         self.sys_conf = cfg.ConfigParser()
@@ -20,13 +19,13 @@ class AssistantConf:
 
     def init_conf_files(self):
         if not isfile('conf/assistant.ini'):
-            self.first_use = True
             self._create_cfg_files()
         else:
             self._read_cfg_files()
 
     def _read_cfg_files(self):
         self.app_conf.read('conf/assistant.ini')
+        self.save('assistant', 'first_use', 'False')
         self.user_conf.read('conf/user.ini')
         self.sys_conf.read('conf/sys.ini')
 
@@ -35,6 +34,7 @@ class AssistantConf:
             os.mkdir('conf')
         with open('conf/assistant.ini', 'w+') as configfile:
             self.app_conf.add_section('assistant')
+            self.app_conf['assistant']['first_use'] = 'True'
             self.app_conf.write(configfile)
         with open('conf/user.ini', 'w+') as configfile:
             self.user_conf.add_section('user')
@@ -46,8 +46,12 @@ class AssistantConf:
     def save(self, section, field, value):
         if section == 'assistant':
             self.app_conf['assistant'][field] = value
+            with open('conf/assistant.ini', 'w+') as configfile:
+                self.app_conf.write(configfile)
         elif section == 'system':
             self.sys_conf['system'][field] = value
+            with open('conf/sys.ini', 'w+') as configfile:
+                self.sys_conf.write(configfile)
         elif section == 'user':
             self.user_conf['user'][field] = value
             with open('conf/user.ini', 'w+') as configfile:

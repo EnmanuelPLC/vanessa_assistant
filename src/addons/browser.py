@@ -90,7 +90,7 @@ def control_browser(core: AssistantCore, phrase: str):
         core.context_set(control_browser)
     elif phrase.find("manual de") >= 0:
         core.say("Abriendo el manual de uso, estoy al tanto")
-        os.startfile('..\\assets\\manual.pdf')
+        os.startfile(os.getcwd() + '/assets/manual.pdf')
     elif phrase.find("cerrar navegador") >= 0:
         keyboard.send_keys("^+w")
         core.say("Navegador cerrado")
@@ -165,13 +165,11 @@ def open_site(core: AssistantCore, phrase):
             if web < 0:
                 find = ''
             else:
-                find = "punto com"
-            while not web:
                 find = phrase.find("punto com")
-                if find < 0:
-                    find = "en cuba"
-                else:
-                    find = "punto com"
+            if find < 0:
+                find = "en cuba"
+            else:
+                find = "punto com"
 
             web = phrase.split(find)[0]
             keyboard.send_keys(web + arr_doms[find])
@@ -182,7 +180,7 @@ def open_site(core: AssistantCore, phrase):
             return
 
     keyboard.send_keys('{ENTER}')
-    core.context_set(open_site)
+    core.context_set(control_browser)
 
 
 # Browser windows actions

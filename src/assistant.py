@@ -8,6 +8,7 @@ from termcolor import colored, cprint
 import pyttsx3
 
 from addon_engine import AddonEngine
+from config import AssistantConf
 
 version = "1.0.0"
 author = "EnmanuelPLC"
@@ -17,35 +18,35 @@ class AssistantCore:
     """ Assistant Core Class """
 
     def __init__(self):
-        self.prev_cmd = None
+        self.user = {'name': ''}
         self.alive = True
+        self.addons_engine = AddonEngine()
+        self.addons_req_online = ()
+        self.commands = {}
+        self.addon_commands = {}
+        self.tts_engine = pyttsx3.init()
+        self.speaking = False
+        self.mic_blocked = False
+        self.config = AssistantConf()
+        self.first_use = eval(self.config.read('assistant', 'first_use'))
+        if not self.first_use:
+            self.user['name'] = self.config.read('user', 'name')
         self.is_online = None
         self.online_check = threading.Thread(target=self.check_internet)
-        self.log_policy = 'all'
         self.assistant_listen_names = "vanesa|vanessa|vane".split('|')
-        self.addons_req_online = ()
-        self.state = ''
-        self.user = {'name': ''}
-        self.minimize = self.maximize = self.to_try = self.to_try_off = self.focus = False
-        self.on_wind_action = 'focus'
-        self.mic_blocked = False
-        self.addons_engine = AddonEngine()
         self.activation_error_counter = 3
-        self.speaking = False
-        self.commands = {}
-        self.plugin_commands = {}
-        self.cmd_not_found = "Comando no encontrado"
-        self.cmd_not_found_in_ctx = "Comando no encontrado en contexto"
-        self.cmd_online_reminder = "No tienes conexión a internet, recuerda que este comando necesita internet para algunas funciones"
-        self.media_player_path = ""
-        self.version = version
-        self.tts_engine = pyttsx3.init()
-        self.log_policy = "all"
-        self.last_say = ""
-        self.last_action = ""
+        self.state = ''
+        self.prev_cmd = None
         self.context = None
         self.context_timer = None
         self.context_default_duration = 60
+        self.minimize = self.maximize = self.to_try = self.to_try_off = self.focus = False
+        self.on_wind_action = 'focus'
+        self.cmd_not_found = "Comando no encontrado"
+        self.cmd_not_found_in_ctx = "Comando no encontrado en contexto"
+        self.cmd_online_reminder = "No tienes conexión a internet, recuerda que este comando necesita internet para algunas funciones"
+        self.last_say = ""
+        self.last_action = ""
 
     def block_mic(self):
         """ Block mick """
@@ -188,24 +189,24 @@ class AssistantCore:
         :param modname:
         :param manifest:
         """
-        plugin_req_online = True
+        addon_req_online = True
         if "require_online" in manifest:
-            plugin_req_online = manifest["require_online"]
-            if plugin_req_online:
+            addon_req_online = manifest["require_online"]
+            if addon_req_online:
                 if modname not in self.addons_req_online:
                     self.addons_req_online += (modname,)
 
         if "commands" in manifest:
             for cmd in manifest["commands"].keys():
-                if not self.is_online and plugin_req_online:
+                if not self.is_online and addon_req_online:
                     self.commands[cmd] = {'cmd': manifest["commands"][cmd], 'warn': self.stub_online_required}
                 else:
                     self.commands[cmd] = manifest["commands"][cmd]
 
-                if modname in self.plugin_commands:
-                    self.plugin_commands[modname].append(cmd)
+                if modname in self.addon_commands:
+                    self.addon_commands[modname].append(cmd)
                 else:
-                    self.plugin_commands[modname] = [cmd]
+                    self.addon_commands[modname] = [cmd]
 
     def stub_online_required(self):
         """ Say need online to proper functionality of addon """
@@ -283,7 +284,7 @@ class AssistantCore:
         if context is None:
             if command == 'activation':
                 self.commands[greeting_cmd](self, '')
-                self.context_set(self.commands)
+                self.context_set(self.commands, '6')
                 return
             elif isinstance(command, list):
                 context = self.commands
@@ -291,7 +292,7 @@ class AssistantCore:
                 return
         else:
             if command != '' and command in greeting_cmd + '|'.join(self.assistant_listen_names):
-                self.say('Estoy esperando por ti, dime un comando')
+                self.say('Estoy atenta, dime un comando')
                 self.context_set(self.commands, 30)
                 return
 
@@ -367,17 +368,18 @@ class AssistantCore:
 
         return have_run
 
-    def context_set(self, context, duration=None):
+    def context_set(self, context: dict | classmethod, duration: float):
         """
         :param context:
         :param duration:
         """
         self.state = 'esperando. . .'
-        if duration is None:
+        if type(duration) is not float:
             duration = self.context_default_duration
+        if type(context) is not dict and type(context) is not classmethod:
+            context = self.commands
         self.context_clear()
         self.context = context
-        self.prev_cmd = self.context
         self.context_timer = Timer(duration, self._context_clear_timer, args=[self.block_mic])
         self.context_timer.start()
 
@@ -387,7 +389,7 @@ class AssistantCore:
         if isinstance(self.context, dict):
             self.say('Si me llamas y no me dices nada, existen 2 opciones, una es que estás indeciso al ver que soy capaz de hacer muchas cosas, o te intriga lo que te pueda decir; a que si')
         elif isinstance(self.context, object):
-            self.say('Bueno parece que ya no me necesitas; recuerda que estoy aquí para lo que sea')
+            self.say('Bueno parece que ya no me necesitas; recuerda que estoy aquí para lo que quieras')
         else:
             self.say('He limpiado el contexto de forma rara')
             print(self.context)
@@ -412,6 +414,6 @@ class AssistantCore:
         self.format_print_key_list("Assistant names", self.assistant_listen_names)
 
         cprint("Commands list: " + "#" * 65, "blue")
-        for plugin in self.plugin_commands:
-            self.format_print_key_list(plugin, self.plugin_commands[plugin])
+        for addon in self.addon_commands:
+            self.format_print_key_list(addon, self.addon_commands[addon])
         cprint("#" * 80, "blue")
