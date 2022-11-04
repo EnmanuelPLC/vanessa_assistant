@@ -2,7 +2,10 @@
 from assistant import AssistantCore
 from pywinauto import keyboard
 from lingua_franca.parse import extract_numbers
+from lingua_franca import load_language
 from utils.default_app_by_ext import get_default_app_path
+
+load_language('es')
 
 
 def start(_core: AssistantCore):
@@ -67,8 +70,15 @@ def start_dictate(core: AssistantCore, phrase: str):
             core.say("Bien, dime el signo")
             core.context_set(dictate_signs)
         elif phrase.find("borrar") >= 0:
-            if phrase.find("línea") >= 0:
-                keyboard.send_keys('^x')
+            borr = phrase.split(' ', -1)
+            if len(borr) > 1:
+                try:
+                    number = extract_numbers(borr[1])
+                    for x in range(0, int(number[0])):
+                        keyboard.send_keys('{BKSP}')
+                except Exception as e:
+                    print(e)
+                    core.say("No entendí bien cuantas veces debo borrar, por favor dimelo de nuevo")
             else:
                 keyboard.send_keys('{BKSP}')
             core.context_set(start_dictate)

@@ -13,7 +13,7 @@ def start(core: AssistantCore):
     """
     manifest = {
         "name": "Comandos de control para multimedia",
-        "version": "2",
+        "version": "1.0",
         "require_online": False,
 
         "commands": {

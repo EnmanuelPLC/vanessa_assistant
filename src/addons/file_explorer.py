@@ -53,7 +53,7 @@ def start(core: AssistantCore):
             "los archivos|las carpetas": open_file_explorer,
             "abre documentos|mis documentos|abre los documentos": open_doc_folder,
             "abre descargas|mis descargas|abre las descargas": open_down_folder,
-            "abre imágenes|mis imágenes|abre las imágenes": open_images_folder,
+            "abre imágenes|mis imágenes|abre las imágenes|abre las fotos|mis fotos": open_images_folder,
             "abre música|mi música|abre la música": open_music_folder,
             "abre videos|mis videos|abre los videos": open_video_folder,
             "quiero ver peliculas|quiero ver películas|mis peliculas|mis películas|abre las peliculas|abre las películas": open_movies_folder,
@@ -115,8 +115,10 @@ def play_random_music(core: AssistantCore, phrase: str):
         core.say('Seleccionando una canción al azar')
         music = get_random_file(music_folder, 'music')
         os.startfile(music_folder + f'\\{music}')
+        core.context_clear()
     elif phrase.find('no') >= 0 or phrase.find('ne') >= 0 or phrase.find('negativo') >= 0:
         core.say('Esta bien, cualquier cosa, aquí estoy a su disposición')
+        core.context_clear()
     else:
         core.say('Responde si, o no;')
         core.context_set(play_random_music)
@@ -127,8 +129,10 @@ def play_random_video(core: AssistantCore, phrase: str):
         core.say('Seleccionando un video al azar')
         video = get_random_file(video_folder, 'video')
         os.startfile(video_folder + f'\\{video}')
+        core.context_clear()
     elif phrase.find('no') >= 0 or phrase.find('ne') >= 0 or phrase.find('negativo') >= 0:
         core.say('Esta bien, cualquier cosa, aquí estoy a su disposición')
+        core.context_clear()
     else:
         core.say('Responde, si, o no')
         core.context_set(play_random_video)

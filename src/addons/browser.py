@@ -14,7 +14,7 @@ def start(_core: AssistantCore):
     """ Start """
     manifest = {
         "name": "Control del Navegador",
-        "version": "2.0",
+        "version": "1.0",
         "require_online": True,
         "commands": {
             "navegador|internet": open_browser,

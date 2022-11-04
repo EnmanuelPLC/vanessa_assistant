@@ -368,16 +368,14 @@ class AssistantCore:
 
         return have_run
 
-    def context_set(self, context: dict | classmethod, duration: float):
+    def context_set(self, context, duration: float = 0.0):
         """
         :param context:
         :param duration:
         """
         self.state = 'esperando. . .'
-        if type(duration) is not float:
+        if type(duration) is not float or duration == 0.0:
             duration = self.context_default_duration
-        if type(context) is not dict and type(context) is not classmethod:
-            context = self.commands
         self.context_clear()
         self.context = context
         self.context_timer = Timer(duration, self._context_clear_timer, args=[self.block_mic])

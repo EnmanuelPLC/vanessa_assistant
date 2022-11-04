@@ -40,6 +40,7 @@ def vanessa_doc(core: AssistantCore, phrase: str):
 def talking(core: AssistantCore, phrase: str):
     if phrase.find('bien') >= 0:
         core.say('Que bueno escuchar eso, y mejor todavía si estoy aquí para ayudarte, a que si?')
+        core.context_clear()
     elif phrase.find('mal') >= 0:
         core.say('Y eso porqué, cuéntame, que te pasa; a lo mejor te puedo ayudar')
         core.context_set(talking_issues)

@@ -18,6 +18,6 @@ def start(core: AssistantCore):
 
 def do_nothing(core: AssistantCore, phrase: str):
     if core.context == core.commands:
-        nothings = ['Esta bien', 'A la orden', 'okey', 'recibido']
+        nothings = ['Esta bien', 'vale', 'okey', 'recibido']
         core.say(text_to_speech=nothings[random.randint(0, len(nothings) - 1)])
         core.context_clear()

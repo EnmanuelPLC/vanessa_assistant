@@ -6,7 +6,7 @@ from assistant import AssistantCore
 def start(core: AssistantCore):
     manifest = {
         "name": "Fecha y hora",
-        "version": "1.2",
+        "version": "1.0",
         "require_online": False,
 
         "commands": {

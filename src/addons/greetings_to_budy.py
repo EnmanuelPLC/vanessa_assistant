@@ -22,7 +22,7 @@ def play_greeting(core: AssistantCore, phrase: str):
     else:
         phrase = phrase[0]
     greetings = "hola " + phrase + ";"
-    greets_arr = ["como estás?", "dime que me trajiste algo; jajajaj era broma, Enmanuel se pone mongólico y me programa estas boberias", "que me cuentas de nuevo", "dime algo bueno"]
+    greets_arr = ["como estás?", "que me cuentas de bueno?", "dime algo interesante"]
     greetings += greets_arr[random.randint(0, len(greets_arr) - 1)]
     core.say(greetings)
     core.context_set(continue_greeting_on_ctx)
@@ -31,8 +31,8 @@ def play_greeting(core: AssistantCore, phrase: str):
 def continue_greeting_on_ctx(core: AssistantCore, phrase: str):
     if phrase.find("bien") >= 0 or phrase.find("bién") >= 0 or phrase.find("regular") >= 0 or phrase.find("más o menos") >= 0:
         core.say("que bueno, me alegro que todo este bien contigo")
-        core.say("si tienes algo que decirme o preguntare, metele, ahora es tu momento")
-        core.context_set(continue_greeting_on_ctx)
+        core.context_clear()
+        # core.say("si tienes algo que decirme o preguntarme, metele, ahora es tu momento")
     # elif phrase.find() > 0:
     #     pass
     # elif phrase.find() > 0:
